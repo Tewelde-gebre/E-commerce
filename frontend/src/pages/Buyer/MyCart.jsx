@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { initializeChapaPayment } from '../../api/orderApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { ShoppingCart, Package, Heart, User, BarChart2, Trash2, Plus, Minus, Globe, ArrowRight, CreditCard, Building2, Smartphone, X } from 'lucide-react';
@@ -10,13 +11,40 @@ const MyCart = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
-  const handlePayment = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
+  const handlePayment = async () => {
+    try {
+      setIsProcessing(true);
+      
+      const pendingOrder = {
+        products: cartItems.map(item => ({
+          // Using dummy ID if needed, or real ones if DB connected
+          productId: '60d0fe4f5311236168a109ca', // Dummy objectId since cart is mock data right now
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalPrice: subtotal + 5
+      };
+
+      localStorage.setItem('pendingOrderData', JSON.stringify(pendingOrder));
+
+      const paymentData = {
+        amount: subtotal + 5,
+        currency: 'ETB',
+        callbackUrl: `${window.location.origin}/buyer/payment/verify`
+      };
+
+      const response = await initializeChapaPayment(paymentData);
+
+      if (response.checkout_url) {
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (err) {
+      console.error("Payment initialization failed:", err);
       setIsProcessing(false);
-      setShowCheckoutModal(false);
-      navigate('/buyer/orders');
-    }, 2000);
+      alert("Payment gateway error. Please try again.");
+    }
   };
 
   const paymentProviders = [

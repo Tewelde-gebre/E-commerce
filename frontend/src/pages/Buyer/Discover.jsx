@@ -5,7 +5,7 @@ import ProductPost from '../../components/ProductPost';
 import { ShoppingCart, Package, Heart, User, Search, BarChart2, Globe, CreditCard, Smartphone, Building2, ChevronRight, CheckCircle2, X, Loader2 } from 'lucide-react';
 import { getProducts } from '../../api/productApi';
 import { getProfile } from '../../api/authApi';
-import { createOrder } from '../../api/orderApi';
+import { createOrder, initializeChapaPayment } from '../../api/orderApi';
 
 const ethiopianBanks = [
   {
@@ -99,28 +99,35 @@ const Discover = () => {
     try {
       setIsProcessing(true);
       
-      // Call the real order creation API
-      await createOrder({
+      const pendingOrder = {
         products: [{
           productId: paymentProduct._id,
           quantity: 1,
           price: paymentProduct.price
         }],
         totalPrice: paymentProduct.price
-      });
+      };
 
-      setPaymentSuccess(true);
-      setTimeout(() => {
-        setShowPayment(false);
-        setPaymentSuccess(false);
-        setSelectedBank(null);
-        setPaymentProduct(null);
-        setIsProcessing(false);
-      }, 2500);
+      // Save pending order to local storage to process it after return from Chapa
+      localStorage.setItem('pendingOrderData', JSON.stringify(pendingOrder));
+
+      const paymentData = {
+        amount: paymentProduct.price,
+        currency: paymentProduct.currency === 'Dollar' ? 'USD' : 'ETB',
+        callbackUrl: `${window.location.origin}/buyer/payment/verify`
+      };
+
+      const response = await initializeChapaPayment(paymentData);
+
+      if (response.checkout_url) {
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (err) {
-      console.error("Order creation failed:", err);
+      console.error("Payment initialization failed:", err.response?.data || err);
       setIsProcessing(false);
-      alert("Checkout failed. Please try again.");
+      alert(`Payment gateway error: ${err.response?.data?.message || err.message}. Please try again.`);
     }
   };
 

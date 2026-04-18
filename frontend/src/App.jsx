@@ -11,6 +11,7 @@ import MyOrders from './pages/Buyer/MyOrders';
 import LikedProducts from './pages/Buyer/LikedProducts';
 import Discover from './pages/Buyer/Discover';
 import Profile from './pages/Buyer/Profile';
+import PaymentVerify from './pages/Buyer/PaymentVerify';
 import SellerDashboard from './pages/Seller/Dashboard';
 import AddProduct from './pages/Seller/AddProduct';
 import MyProducts from './pages/Seller/MyProducts';
@@ -52,6 +53,7 @@ const AppContent = () => {
           <Route path="/buyer/orders" element={<MyOrders />} />
           <Route path="/buyer/liked" element={<LikedProducts />} />
           <Route path="/buyer/profile" element={<Profile />} />
+          <Route path="/buyer/payment/verify" element={<PaymentVerify />} />
 
           <Route path="/seller" element={<SellerDashboard />} />
           <Route path="/seller/add" element={<AddProduct />} />
