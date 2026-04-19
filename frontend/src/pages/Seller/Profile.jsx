@@ -3,8 +3,9 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import { 
   BarChart2, PlusCircle, ShoppingBag, List, TrendingUp, User, 
   MapPin, Phone, Mail, Store, Save, Lock, Camera, ShieldCheck,
-  CheckCircle2, AlertCircle, MessageSquare
+  CheckCircle2, AlertCircle, MessageSquare, Loader2
 } from 'lucide-react';
+import { getProfile, updateUserProfile } from '../../api/authApi';
 
 const ProfileField = ({ label, name, value, icon: Icon, type = 'text', placeholder, onChange }) => (
   <div className="space-y-2">
@@ -27,13 +28,25 @@ const ProfileField = ({ label, name, value, icon: Icon, type = 'text', placehold
 
 const SellerProfile = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
   
-  // States synced with localStorage
-  const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem('user_avatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike");
-  const [is2FAEnabled, setIs2FAEnabled] = useState(() => localStorage.getItem('is_2fa_enabled') === 'true');
-  const [shopName, setShopName] = useState(() => localStorage.getItem('user_name') || "Mike's Gear");
-  const [tempShopName, setTempShopName] = useState(shopName);
+  // Real states
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [shopName, setShopName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  
+  const [tempData, setTempData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    description: ""
+  });
 
   const sidebarItems = [
     { label: 'Dashboard', icon: BarChart2, link: '/seller' },
@@ -47,45 +60,75 @@ const SellerProfile = () => {
 
   // Listen for sync from header/other components
   useEffect(() => {
-    const syncProfile = () => {
-      setAvatarUrl(localStorage.getItem('user_avatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike");
-      setShopName(localStorage.getItem('user_name') || "Mike's Gear");
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const user = await getProfile();
+        setShopName(user.name || "");
+        setEmail(user.email || "");
+        setPhone(user.phone || "");
+        setLocation(user.location || "");
+        setDescription(user.description || "");
+        setAvatarUrl(user.avatar || null);
+        
+        setTempData({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          location: user.location || "",
+          description: user.description || ""
+        });
+      } catch (err) {
+        console.error("Failed to fetch seller profile:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    window.addEventListener('profile_updated', syncProfile);
-    window.addEventListener('storage', syncProfile);
-    return () => {
-      window.removeEventListener('profile_updated', syncProfile);
-      window.removeEventListener('storage', syncProfile);
-    };
+    fetchUserData();
   }, []);
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result;
-        setAvatarUrl(base64);
-        localStorage.setItem('user_avatar', base64);
+      try {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('name', shopName);
+
+        const updatedUser = await updateUserProfile(formData);
+        setAvatarUrl(updatedUser.avatar);
+        
         // Sync to header
         window.dispatchEvent(new Event('profile_updated'));
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error("Avatar update failed:", err);
+      }
     }
   };
 
   const toggle2FA = () => {
-    const newState = !is2FAEnabled;
-    setIs2FAEnabled(newState);
-    localStorage.setItem('is_2fa_enabled', newState.toString());
+    setIs2FAEnabled(!is2FAEnabled);
   };
 
-  const handleSaveProfile = () => {
-    setShopName(tempShopName);
-    localStorage.setItem('user_name', tempShopName);
-    // Sync to header
-    window.dispatchEvent(new Event('profile_updated'));
-    alert('Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('name', tempData.name);
+      formData.append('email', tempData.email);
+      formData.append('phone', tempData.phone);
+      formData.append('location', tempData.location);
+      formData.append('description', tempData.description);
+
+      const updatedUser = await updateUserProfile(formData);
+      
+      setShopName(updatedUser.name);
+      // Sync to header
+      window.dispatchEvent(new Event('profile_updated'));
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+      alert('Error saving profile');
+    }
   };
 
   return (
@@ -115,7 +158,15 @@ const SellerProfile = () => {
                 <div className="relative inline-block">
                   <div className="w-32 h-32 rounded-[24px] bg-white p-1.5 shadow-xl mx-auto ring-4 ring-white transition-transform group-hover:scale-[1.02]">
                     <div className="w-full h-full rounded-[18px] bg-slate-100 flex items-center justify-center overflow-hidden">
-                      <img src={avatarUrl} alt="Seller" className="w-full h-full object-cover" />
+                      {avatarUrl ? (
+                         <img 
+                          src={avatarUrl.startsWith('http') ? avatarUrl : `https://fashion-9hk0.onrender.com${avatarUrl}`} 
+                          alt="Seller" 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <User className="w-12 h-12 text-slate-300" />
+                      )}
                     </div>
                   </div>
                   <button 
@@ -180,14 +231,32 @@ const SellerProfile = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <ProfileField 
                       label="Shop Name" 
-                      value={tempShopName} 
+                      value={tempData.name} 
                       icon={Store} 
                       placeholder="Your store name" 
-                      onChange={(e) => setTempShopName(e.target.value)}
+                      onChange={(e) => setTempData({...tempData, name: e.target.value})}
                     />
-                    <ProfileField label="Support Email" value="mike@fashionmarket.com" icon={Mail} placeholder="Support email" />
-                    <ProfileField label="Contact Phone" value="+251 912 345 678" icon={Phone} placeholder="Phone number" />
-                    <ProfileField label="Location" value="Addis Ababa, Ethiopia" icon={MapPin} placeholder="Store location" />
+                    <ProfileField 
+                      label="Support Email" 
+                      value={tempData.email} 
+                      icon={Mail} 
+                      placeholder="Support email" 
+                      onChange={(e) => setTempData({...tempData, email: e.target.value})}
+                    />
+                    <ProfileField 
+                      label="Contact Phone" 
+                      value={tempData.phone} 
+                      icon={Phone} 
+                      placeholder="Phone number" 
+                      onChange={(e) => setTempData({...tempData, phone: e.target.value})}
+                    />
+                    <ProfileField 
+                      label="Location" 
+                      value={tempData.location} 
+                      icon={MapPin} 
+                      placeholder="Store location" 
+                      onChange={(e) => setTempData({...tempData, location: e.target.value})}
+                    />
                   </div>
                   
                   <div className="space-y-2">
@@ -195,7 +264,9 @@ const SellerProfile = () => {
                     <textarea 
                       rows="4"
                       className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/20 font-semibold text-slate-800 resize-none transition-all"
-                      defaultValue="Providing premium quality clothes to our customers since 2021. Specializing in modern streetwear and traditional Ethiopian designs."
+                      value={tempData.description}
+                      onChange={(e) => setTempData({...tempData, description: e.target.value})}
+                      placeholder="Describe your shop..."
                     />
                   </div>
                 </div>

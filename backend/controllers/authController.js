@@ -97,6 +97,9 @@ const getProfile = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
+                location: user.location,
+                description: user.description,
                 role: user.role,
                 avatar: user.avatar,
             });
@@ -114,6 +117,11 @@ const updateUserProfile = async (req, res) => {
 
         if (user) {
             user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
+            user.location = req.body.location !== undefined ? req.body.location : user.location;
+            user.description = req.body.description !== undefined ? req.body.description : user.description;
+
             if (req.body.password) {
                 user.password = req.body.password;
             }
@@ -125,6 +133,10 @@ const updateUserProfile = async (req, res) => {
             res.json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                location: updatedUser.location,
+                description: updatedUser.description,
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
                 token: generateToken(updatedUser._id),

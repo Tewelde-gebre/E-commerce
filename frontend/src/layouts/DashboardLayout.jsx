@@ -95,6 +95,9 @@ const DashboardLayout = ({
     };
     fetchUserData();
 
+    // Listen for manual sync events from Profile pages
+    window.addEventListener('profile_updated', fetchUserData);
+
     const fetchAlerts = async () => {
       try {
         const data = await getNotifications();
@@ -108,7 +111,10 @@ const DashboardLayout = ({
 
     // Refresh notifications every 2 minutes
     const interval = setInterval(fetchAlerts, 120000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('profile_updated', fetchUserData);
+    };
   }, []);
 
   useEffect(() => {

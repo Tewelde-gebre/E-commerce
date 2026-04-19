@@ -1,62 +1,101 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { ShoppingCart, Package, Heart, User, BarChart2, Bell, Lock, MapPin, CreditCard, Globe, Camera, Save, CheckCircle, Shield, Smartphone, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Package, Heart, User, BarChart2, Bell, Lock, MapPin, CreditCard, Globe, Camera, Save, CheckCircle, Shield, Smartphone, ChevronRight, Loader2 } from 'lucide-react';
+import { getProfile, updateUserProfile } from '../../api/authApi';
 
 const Profile = () => {
-  const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem('user_avatar') || null);
-  const [name, setName] = useState(() => localStorage.getItem('user_name') || 'አበበ ለማ');
-  const [email, setEmail] = useState(() => localStorage.getItem('user_email') || 'tewe@example.com');
-  const [phone, setPhone] = useState(() => localStorage.getItem('user_phone') || '+251 911 000 000');
-  const [username, setUsername] = useState(() => localStorage.getItem('user_handle') || 'abebe_12');
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('Profile Saved Successfully!');
-  const [is2FAEnabled, setIs2FAEnabled] = useState(() => localStorage.getItem('user_2fa') === 'true');
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [expandedSetting, setExpandedSetting] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleSaveProfile = () => {
-    localStorage.setItem('user_name', name);
-    localStorage.setItem('user_email', email);
-    localStorage.setItem('user_phone', phone);
-    localStorage.setItem('user_handle', username);
-    window.dispatchEvent(new Event('profile_updated'));
-    setToastMessage('Profile Saved Successfully!');
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const user = await getProfile();
+        setName(user.name || '');
+        setEmail(user.email || '');
+        setPhone(user.phone || '');
+        setUsername(user.username || '');
+        setAvatarUrl(user.avatar || null);
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    try {
+      setToastMessage('Saving Changes...');
+      setShowToast(true);
+      
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('username', username);
+
+      const updatedUser = await updateUserProfile(formData);
+      
+      // Update local states
+      setName(updatedUser.name);
+      setEmail(updatedUser.email);
+      
+      // Sync to header
+      window.dispatchEvent(new Event('profile_updated'));
+      
+      setToastMessage('Profile Saved Successfully!');
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      setToastMessage('Error saving profile');
+      setTimeout(() => setShowToast(false), 3000);
+    }
   };
 
   const handleToggle2FA = () => {
     const newState = !is2FAEnabled;
     setIs2FAEnabled(newState);
-    localStorage.setItem('user_2fa', newState);
     setToastMessage(newState ? '2FA Enabled Successfully!' : '2FA Disabled');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setAvatarUrl(localStorage.getItem('user_avatar') || null);
-    };
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('avatar_updated', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('avatar_updated', handleStorageChange);
-    };
-  }, []);
-
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarUrl(reader.result);
-        localStorage.setItem('user_avatar', reader.result);
-        window.dispatchEvent(new Event('avatar_updated'));
-      };
-      reader.readAsDataURL(file);
+      try {
+        setToastMessage('Uploading Avatar...');
+        setShowToast(true);
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('name', name);
+
+        const updatedUser = await updateUserProfile(formData);
+        setAvatarUrl(updatedUser.avatar);
+        
+        // Sync to header
+        window.dispatchEvent(new Event('profile_updated'));
+        
+        setToastMessage('Avatar Updated!');
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (err) {
+        console.error("Failed to upload avatar:", err);
+        setToastMessage('Error uploading avatar');
+      }
     }
   };
 
@@ -100,9 +139,13 @@ const Profile = () => {
             <div className="relative group">
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-blue-500/20 overflow-hidden">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <img 
+                    src={avatarUrl.startsWith('http') ? avatarUrl : `https://fashion-9hk0.onrender.com${avatarUrl}`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
-                  'አ'
+                  name ? name[0].toUpperCase() : <User className="w-10 h-10" />
                 )}
               </div>
               <button 
@@ -245,15 +288,15 @@ const Profile = () => {
       </div>
 
       <AnimatePresence>
-        {showToast && (
+        {(showToast || loading) && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             className="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50"
           >
-            <CheckCircle className="w-5 h-5 text-emerald-400" />
-            <span className="text-sm font-semibold">{toastMessage}</span>
+            {loading ? <Loader2 className="w-5 h-5 text-blue-400 animate-spin" /> : <CheckCircle className="w-5 h-5 text-emerald-400" />}
+            <span className="text-sm font-semibold">{loading ? 'Loading Profile...' : toastMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
