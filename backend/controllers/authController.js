@@ -8,25 +8,37 @@ const generateToken = (id) => {
 const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        let role = req.body.role;
+        console.log(`Registration attempt for: ${email}`);
+
+        let role = req.body.role || 'buyer';
         const adminEmail = process.env.ADMIN_EMAIL || 'tewe@gmail.com';
 
         if (role === 'admin' && email !== adminEmail) {
+            console.warn(`Unauthorized admin registration attempt: ${email}`);
             return res.status(403).json({ message: 'Not authorized to register as admin' });
         }
+
         if (email === adminEmail) {
             role = 'admin';
+            console.log(`Email matches adminEmail, setting role to admin for: ${email}`);
         }
 
         const userExists = await User.findOne({ email });
 
         if (userExists) {
+            console.log(`Registration failed: User already exists (${email})`);
             return res.status(400).json({ message: 'User already exists' });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            console.error('CRITICAL ERROR: JWT_SECRET is not defined in environment variables');
+            return res.status(500).json({ message: 'Server configuration error (JWT_SECRET)' });
         }
 
         const user = await User.create({ name, email, password, role });
 
         if (user) {
+            console.log(`Registration successful for: ${email} (${role})`);
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
@@ -36,9 +48,11 @@ const registerUser = async (req, res) => {
                 token: generateToken(user._id)
             });
         } else {
+            console.error(`Registration failed: User creation returned null for ${email}`);
             res.status(400).json({ message: 'Invalid user data' });
         }
     } catch (error) {
+        console.error(`Registration Error for ${req.body.email}:`, error.message);
         res.status(500).json({ message: error.message });
     }
 };

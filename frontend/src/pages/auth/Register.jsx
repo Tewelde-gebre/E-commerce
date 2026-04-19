@@ -100,7 +100,9 @@ const Register = () => {
       });
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      console.error("Registration error:", err);
+      const message = err.response?.data?.message || err.message || "Registration failed. Try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
