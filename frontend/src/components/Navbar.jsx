@@ -6,7 +6,7 @@ import { Menu, X, ShoppingBag, Search, Heart, Globe, ChevronDown, Check } from '
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [language, setLanguage] = useState('AM');
+  const [language, setLanguage] = useState('EN');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
 
