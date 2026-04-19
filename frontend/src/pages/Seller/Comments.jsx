@@ -32,7 +32,7 @@ const CommentItem = ({ comment, onReply }) => {
         {/* Left: Product Context */}
         <div className="w-full md:w-48 shrink-0">
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 group-hover:shadow-lg transition-all duration-500">
-            <img src={comment.productId?.image ? `http://localhost:5000${comment.productId.image}` : ''} alt={comment.productId?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+            <img src={comment.productId?.image ? `https://fashion-9hk0.onrender.com${comment.productId.image}` : ''} alt={comment.productId?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
               <span className="text-[10px] font-black text-white uppercase tracking-widest">{comment.productId?.title}</span>
             </div>

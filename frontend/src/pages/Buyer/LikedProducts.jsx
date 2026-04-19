@@ -87,7 +87,7 @@ const LikedProducts = () => {
             >
               <div className="aspect-[4/5] overflow-hidden relative bg-slate-100">
                 <img
-                  src={item.image?.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                  src={item.image?.startsWith('http') ? item.image : `https://fashion-9hk0.onrender.com${item.image}`}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

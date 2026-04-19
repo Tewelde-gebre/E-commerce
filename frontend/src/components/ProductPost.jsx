@@ -105,7 +105,7 @@ const ProductPost = ({ product }) => {
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-slate-100">
         <img 
-          src={product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`} 
+          src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
           alt={product.title} 
           className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
         />

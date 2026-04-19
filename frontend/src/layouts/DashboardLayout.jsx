@@ -185,7 +185,7 @@ const DashboardLayout = ({
   const getAvatarSource = () => {
     if (!currentUser.avatar) return null;
     if (currentUser.avatar.startsWith('http')) return currentUser.avatar;
-    return `http://localhost:5000${currentUser.avatar}`;
+    return `https://fashion-9hk0.onrender.com${currentUser.avatar}`;
   };
 
   const SidebarContent = () => (

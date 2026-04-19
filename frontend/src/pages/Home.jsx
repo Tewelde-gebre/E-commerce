@@ -160,7 +160,7 @@ const Home = () => {
                 >
                   <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                     <img 
-                      src={product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`} 
+                      src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                     />

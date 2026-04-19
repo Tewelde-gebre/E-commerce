@@ -92,7 +92,7 @@ const MyProducts = () => {
               <div key={product._id} className="flex flex-col p-5 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-xl">
                 <div className="w-full aspect-square rounded-xl overflow-hidden bg-white shadow-sm mb-5 relative">
                   <img 
-                    src={product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`} 
+                    src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
                     alt={product.title} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   />
