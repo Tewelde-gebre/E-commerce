@@ -26,9 +26,10 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
         const [profile, products, allOrders] = await Promise.all([
           getProfile(),
-          getMyProducts(),
+          getMyProducts(token),
           getAllOrders()
         ]);
         setUserProfile(profile);

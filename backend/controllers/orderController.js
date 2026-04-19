@@ -36,7 +36,7 @@ const getMyOrders = async (req, res) => {
 const getOrders = async (req, res) => {
     try {
         // For simplicity, returning all orders.
-        const orders = await Order.find({}).populate('userId', 'id name').populate('products.productId', 'title price');
+        const orders = await Order.find({}).sort({ createdAt: -1 }).populate('userId', 'name email').populate('products.productId', 'title price image');
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -7,7 +7,17 @@ const generateToken = (id) => {
 
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password } = req.body;
+        let role = req.body.role;
+        const adminEmail = process.env.ADMIN_EMAIL || 'tewe@gmail.com';
+
+        if (role === 'admin' && email !== adminEmail) {
+            return res.status(403).json({ message: 'Not authorized to register as admin' });
+        }
+        if (email === adminEmail) {
+            role = 'admin';
+        }
+
         const userExists = await User.findOne({ email });
 
         if (userExists) {
@@ -37,8 +47,18 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
+        const adminEmail = process.env.ADMIN_EMAIL || 'tewe@gmail.com';
 
         if (user && (await user.matchPassword(password))) {
+            if (user.email === adminEmail && user.role !== 'admin') {
+                user.role = 'admin';
+                await user.save();
+            }
+
+            if (user.role === 'admin' && user.email !== adminEmail) {
+                return res.status(403).json({ message: 'Not authorized as admin' });
+            }
+
             res.json({
                 _id: user._id,
                 name: user.name,

@@ -6,6 +6,7 @@ import { ShoppingCart, Package, Heart, User, CheckCircle, Clock, Truck, BarChart
 import { Link } from 'react-router-dom';
 import { getProfile } from '../../api/authApi';
 import { getMyOrders } from '../../api/orderApi';
+import { getProducts } from '../../api/productApi';
 
 const StatCard = ({ title, value, icon: Icon, color = 'bg-blue-600', trend = 'Live data' }) => (
   <motion.div 
@@ -72,6 +73,7 @@ const QuickAction = ({ icon: Icon, label, color, link }) => (
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,8 +81,12 @@ const Dashboard = () => {
       try {
         const profile = await getProfile();
         setUserProfile(profile);
-        const orderData = await getMyOrders();
+        const [orderData, productData] = await Promise.all([
+          getMyOrders(),
+          getProducts(),
+        ]);
         setOrders(orderData);
+        setProducts(productData);
       } catch (err) {
         console.error("Dashboard data fetch failed:", err);
       } finally {
@@ -107,12 +113,12 @@ const Dashboard = () => {
     );
   }
 
-  const trendingStyles = [
-    { id: 1, name: 'Silk Scarf', price: 35, image: 'https://images.unsplash.com/photo-1584917469223-99ab23ce89a9?auto=format&fit=crop&w=300&q=80' },
-    { id: 2, name: 'Leather Bag', price: 120, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80' },
-    { id: 3, name: 'Summer Hat', price: 25, image: 'https://images.unsplash.com/photo-1572307480813-ceb0e59d8325?auto=format&fit=crop&w=300&q=80' },
-    { id: 4, name: 'Sunglasses', price: 55, image: 'https://images.unsplash.com/photo-1511499767390-a73c2331bbf3?auto=format&fit=crop&w=300&q=80' },
-  ];
+  const trendingStyles = products.slice(0, 4).map(p => ({
+    id: p._id,
+    name: p.title,
+    price: p.price,
+    image: p.image?.startsWith('http') ? p.image : `http://localhost:5000${p.image}`,
+  }));
 
   return (
     <DashboardLayout

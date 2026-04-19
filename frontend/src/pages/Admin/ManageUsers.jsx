@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { 
   Users, LayoutGrid, ClipboardList, BarChart3, Search, 
-  UserCheck, UserX, UserPlus, Shield, Trash2, Ban, 
-  Filter, MoreHorizontal, CheckCircle2, ShieldCheck 
+  UserCheck, Ban, Shield, Trash2,
+  ShieldCheck, Loader2, UserX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getUsers } from '../../api/authApi';
 
 const UserRow = ({ id, name, email, role, status, onAction }) => {
+  const initial = name ? name[0].toUpperCase() : '?';
   return (
     <motion.tr 
       layout
@@ -20,7 +22,7 @@ const UserRow = ({ id, name, email, role, status, onAction }) => {
         <div className="flex items-center gap-5">
           <div className="relative">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20 uppercase">
-              {name[0]}
+              {initial}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${status === 'Active' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
           </div>
@@ -32,7 +34,7 @@ const UserRow = ({ id, name, email, role, status, onAction }) => {
       </td>
       <td className="py-7 px-6">
         <div className="flex items-center gap-2">
-           <Shield className={`w-4 h-4 ${role === 'Admin' ? 'text-violet-400' : role === 'Seller' ? 'text-orange-400' : 'text-blue-400'}`} />
+           <Shield className={`w-4 h-4 ${role === 'admin' ? 'text-violet-400' : role === 'seller' ? 'text-orange-400' : 'text-blue-400'}`} />
            <span className="text-slate-300 font-black uppercase text-[10px] tracking-widest">{role}</span>
         </div>
       </td>
@@ -69,13 +71,10 @@ const UserRow = ({ id, name, email, role, status, onAction }) => {
 
 const ManageUsers = () => {
   const [filter, setFilter] = useState('all');
-  const [userList, setUserList] = useState([
-    { id: 1, name: 'አበበ_fashion', email: 'abebe@ethio.com', role: 'Seller', status: 'Active' },
-    { id: 2, name: 'samuel_k', email: 'sam@buyer.com', role: 'Buyer', status: 'Active' },
-    { id: 3, name: 'ለማ_admin', email: 'lema@admin.com', role: 'Admin', status: 'Active' },
-    { id: 4, name: 'rebel_user', email: 'flagged@spam.com', role: 'Buyer', status: 'Inactive' },
-    { id: 5, name: 'ethio_store', email: 'store@ethio.com', role: 'Seller', status: 'Active' },
-  ]);
+  const [search, setSearch] = useState('');
+  const [userList, setUserList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: BarChart3, link: '/admin' },
@@ -85,19 +84,50 @@ const ManageUsers = () => {
     { label: 'Site Reports', icon: ShieldCheck, link: '/admin/reports' },
   ];
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const data = await getUsers();
+        // Map DB users to the shape the row expects
+        const mapped = data.map(u => ({
+          id: u._id,
+          name: u.name || 'Unknown',
+          email: u.email,
+          role: u.role,
+          status: 'Active', // No ban field in DB yet; default to Active
+        }));
+        setUserList(mapped);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+        setError('Failed to load users. Please refresh.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   const handleAction = (id, action) => {
     if (action === 'delete') {
-      setUserList(userList.filter(u => u.id !== id));
+      setUserList(prev => prev.filter(u => u.id !== id));
     } else if (action === 'toggleStatus') {
-      setUserList(userList.map(u => 
-        u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u
-      ));
+      setUserList(prev =>
+        prev.map(u =>
+          u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u
+        )
+      );
     }
   };
 
-  const filteredUsers = filter === 'all' 
-    ? userList 
-    : userList.filter(u => u.role.toLowerCase() === filter);
+  const filteredUsers = userList.filter(u => {
+    const matchesFilter = filter === 'all' || u.role.toLowerCase() === filter;
+    const matchesSearch =
+      search === '' ||
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   return (
     <DashboardLayout 
@@ -119,7 +149,7 @@ const ManageUsers = () => {
                   <div className="w-2 h-2 rounded-full bg-blue-500" /> {userList.length} Total Users
                </div>
                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" /> {userList.filter(u => u.status === 'Active').length} Verified
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" /> {userList.filter(u => u.status === 'Active').length} Active
                </div>
             </div>
           </div>
@@ -144,42 +174,56 @@ const ManageUsers = () => {
              <div className="relative flex-1 sm:w-80 group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                 <input 
-                  type="text" 
-                  placeholder="Query user records..." 
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by name or email..." 
                   className="w-full pl-14 pr-6 py-4 bg-slate-900/80 border border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-white transition-all shadow-inner placeholder:text-slate-600" 
                 />
              </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto relative z-10">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/10 text-slate-500 text-xs font-black uppercase tracking-[0.25em]">
-                <th className="pb-8 px-6">User Primary Identity</th>
-                <th className="pb-8 px-6">Assigned Role</th>
-                <th className="pb-8 px-6">Security Status</th>
-                <th className="pb-8 px-6 text-right">Moderator Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-               <AnimatePresence mode="popLayout">
-                 {filteredUsers.map((user) => (
-                    <UserRow key={user.id} {...user} onAction={handleAction} />
-                 ))}
-               </AnimatePresence>
-            </tbody>
-          </table>
-          
-          {filteredUsers.length === 0 && (
-            <div className="py-20 text-center">
-              <div className="w-20 h-20 bg-slate-900 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-slate-800">
-                <Shield className="w-10 h-10 text-slate-700" />
+        {loading ? (
+          <div className="flex justify-center items-center py-24 relative z-10">
+            <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="py-20 text-center relative z-10">
+            <p className="text-rose-400 font-bold">{error}</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto relative z-10">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/10 text-slate-500 text-xs font-black uppercase tracking-[0.25em]">
+                  <th className="pb-8 px-6">User Identity</th>
+                  <th className="pb-8 px-6">Role</th>
+                  <th className="pb-8 px-6">Status</th>
+                  <th className="pb-8 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                 <AnimatePresence mode="popLayout">
+                   {filteredUsers.map((user) => (
+                      <UserRow key={user.id} {...user} onAction={handleAction} />
+                   ))}
+                 </AnimatePresence>
+              </tbody>
+            </table>
+            
+            {filteredUsers.length === 0 && (
+              <div className="py-20 text-center">
+                <div className="w-20 h-20 bg-slate-900 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-slate-800">
+                  <UserX className="w-10 h-10 text-slate-700" />
+                </div>
+                <h4 className="text-xl font-bold text-slate-400 italic">
+                  {userList.length === 0 ? 'No users have registered yet.' : 'No users match your search.'}
+                </h4>
               </div>
-              <h4 className="text-xl font-bold text-slate-400 italic">No correlating user records found</h4>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

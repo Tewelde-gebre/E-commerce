@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { 
   Users, LayoutGrid, ClipboardList, BarChart3, Search, Package, 
   CheckCircle, XCircle, MoreVertical, ShieldAlert, Store, Tag, 
-  Trash2, Filter, AlertCircle, ShoppingBag, ShieldCheck
+  Trash2, Filter, AlertCircle, ShoppingBag, ShieldCheck, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getProducts } from '../../api/productApi';
+import axiosInstance from '../../api/axiosConfig';
 
 const ProductCard = ({ id, name, status, category, price, items, seller, color, onAction }) => {
   return (
@@ -93,15 +95,17 @@ const ProductCard = ({ id, name, status, category, price, items, seller, color, 
   );
 };
 
+const CARD_COLORS = [
+  'bg-rose-500', 'bg-indigo-600', 'bg-blue-600',
+  'bg-emerald-600', 'bg-amber-600', 'bg-violet-600', 'bg-cyan-600'
+];
+
 const ManageProducts = () => {
   const [filter, setFilter] = useState('all');
-  const [productList, setProductList] = useState([
-    { id: 1, name: 'Silk Traditional Scarf', status: 'Active', category: 'Accessories', price: '2,400', items: 120, seller: 'Abebe Store', color: 'bg-rose-500' },
-    { id: 2, name: 'Modern Leather Jacket', status: 'Pending', category: 'Apparel', price: '6,200', items: 12, seller: 'Samuel Fashion', color: 'bg-indigo-600' },
-    { id: 3, name: 'Traditional Habesha Dress', status: 'Active', category: 'Apparel', price: '8,500', items: 15, seller: 'Liya Traditional', color: 'bg-blue-600' },
-    { id: 4, name: 'Running Performance Shoes', status: 'Flagged', category: 'Footwear', price: '3,800', items: 5, seller: 'Sporty Mike', color: 'bg-emerald-600' },
-    { id: 5, name: 'Streetwear Oversized Hoodie', status: 'Active', category: 'Apparel', price: '1,800', items: 250, seller: 'Urban Hub', color: 'bg-amber-600' },
-  ]);
+  const [search, setSearch] = useState('');
+  const [productList, setProductList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: BarChart3, link: '/admin' },
@@ -111,19 +115,66 @@ const ManageProducts = () => {
     { label: 'Site Reports', icon: ShieldCheck, link: '/admin/reports' },
   ];
 
-  const handleAction = (id, action) => {
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await getProducts();
+        // Map API data to the shape the card expects
+        const mapped = data.map((p, idx) => ({
+          id: p._id,
+          name: p.title,
+          status: p.status || 'Active',
+          category: p.category || 'Uncategorized',
+          price: Number(p.price).toLocaleString(),
+          items: p.stock ?? 0,
+          seller: p.sellerId?.name || p.sellerId?.email || 'Unknown Seller',
+          color: CARD_COLORS[idx % CARD_COLORS.length],
+        }));
+        setProductList(mapped);
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setError('Failed to load products. Please refresh.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleAction = async (id, action) => {
     if (action === 'Delete') {
-      setProductList(productList.filter(p => p.id !== id));
+      try {
+        const token = localStorage.getItem('token');
+        await axiosInstance.delete(`/products/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProductList(prev => prev.filter(p => p.id !== id));
+      } catch (err) {
+        console.error('Delete failed:', err);
+        alert('Failed to delete product.');
+      }
     } else {
-      setProductList(productList.map(p => 
-        p.id === id ? { ...p, status: action === 'Approve' ? 'Active' : action } : p
-      ));
+      // Local status toggle (Approve / Flag) — can be wired to a PATCH endpoint later
+      setProductList(prev =>
+        prev.map(p =>
+          p.id === id ? { ...p, status: action === 'Approve' ? 'Active' : action } : p
+        )
+      );
     }
   };
 
-  const filteredProducts = filter === 'all' 
-    ? productList 
-    : productList.filter(p => p.status.toLowerCase() === filter.toLowerCase() || p.category.toLowerCase() === filter.toLowerCase());
+  const filteredProducts = productList.filter(p => {
+    const matchesFilter =
+      filter === 'all' ||
+      p.status.toLowerCase() === filter.toLowerCase() ||
+      p.category.toLowerCase() === filter.toLowerCase();
+    const matchesSearch =
+      search === '' ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.seller.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   return (
     <DashboardLayout 
@@ -164,29 +215,45 @@ const ManageProducts = () => {
           <div className="relative flex-1 sm:w-80 group">
              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
              <input 
-               type="text" 
-               placeholder="Search by Product Name or SKU..." 
+               type="text"
+               value={search}
+               onChange={e => setSearch(e.target.value)}
+               placeholder="Search by product name or seller..." 
                className="w-full pl-14 pr-6 py-4 bg-slate-900/80 border border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-white transition-all shadow-inner placeholder:text-slate-600" 
              />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
-         <AnimatePresence mode="popLayout">
-           {filteredProducts.map((p) => (
-              <ProductCard key={p.id} {...p} onAction={handleAction} />
-           ))}
-         </AnimatePresence>
-      </div>
-
-      {filteredProducts.length === 0 && (
-        <div className="py-20 text-center">
-          <div className="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-8 border border-slate-800">
-            <LayoutGrid className="w-10 h-10 text-slate-700" />
-          </div>
-          <h4 className="text-xl font-bold text-slate-500 italic">No correlating products in this view</h4>
+      {loading ? (
+        <div className="flex justify-center items-center py-32">
+          <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
         </div>
+      ) : error ? (
+        <div className="py-20 text-center">
+          <p className="text-rose-400 font-bold">{error}</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
+             <AnimatePresence mode="popLayout">
+               {filteredProducts.map((p) => (
+                  <ProductCard key={p.id} {...p} onAction={handleAction} />
+               ))}
+             </AnimatePresence>
+          </div>
+
+          {filteredProducts.length === 0 && (
+            <div className="py-20 text-center">
+              <div className="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-8 border border-slate-800">
+                <LayoutGrid className="w-10 h-10 text-slate-700" />
+              </div>
+              <h4 className="text-xl font-bold text-slate-500 italic">
+                {productList.length === 0 ? 'No products have been posted yet.' : 'No products match this filter.'}
+              </h4>
+            </div>
+          )}
+        </>
       )}
     </DashboardLayout>
   );

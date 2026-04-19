@@ -94,17 +94,29 @@ const Dashboard = () => {
     );
   }
 
-  const growthData = [
-    { name: 'Mon', users: 400, sales: 2400 },
-    { name: 'Tue', users: 600, sales: 1398 },
-    { name: 'Wed', users: 800, sales: 9800 },
-    { name: 'Thu', users: 500, sales: 3908 },
-    { name: 'Fri', users: 700, sales: 4800 },
-    { name: 'Sat', users: 900, sales: 3800 },
-    { name: 'Sun', users: 1100, sales: 4300 },
-  ];
-
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+
+  // Build last-7-days chart from real orders
+  const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const growthData = (() => {
+    const today = new Date();
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (6 - i));
+      return { name: DAY_LABELS[d.getDay()], sales: 0, users: 0, _date: d.toDateString() };
+    });
+    orders.forEach(order => {
+      const d = new Date(order.createdAt).toDateString();
+      const slot = days.find(s => s._date === d);
+      if (slot) { slot.sales += order.totalPrice || 0; slot.users += 1; }
+    });
+    users.forEach(user => {
+      const d = new Date(user.createdAt).toDateString();
+      const slot = days.find(s => s._date === d);
+      if (slot) slot.users += 1;
+    });
+    return days.map(({ name, sales, users }) => ({ name, sales, users }));
+  })();
 
   return (
     <DashboardLayout 
@@ -116,10 +128,10 @@ const Dashboard = () => {
       headerLeft={<div className="flex items-center gap-3"><ShieldCheck className="text-blue-400" /> Platform Governance</div>}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-        <StatCard title="Total Users" value={users.length.toLocaleString()} icon={Users} color="bg-blue-600" trend="12" />
-        <StatCard title="Total Products" value={products.length.toLocaleString()} icon={Package} color="bg-orange-600" trend="5" />
+        <StatCard title="Total Users" value={users.length.toLocaleString()} icon={Users} color="bg-blue-600" />
+        <StatCard title="Total Products" value={products.length.toLocaleString()} icon={Package} color="bg-orange-600" />
         <StatCard title="Total Orders" value={orders.length.toLocaleString()} icon={Zap} color="bg-amber-600" />
-        <StatCard title="Platform Revenue" value={`ብር ${(totalRevenue/1000).toFixed(1)}K`} icon={TrendingUp} color="bg-emerald-600" trend="8" />
+        <StatCard title="Platform Revenue" value={totalRevenue >= 1000 ? `ብር ${(totalRevenue/1000).toFixed(1)}K` : `ብር ${totalRevenue.toLocaleString()}`} icon={TrendingUp} color="bg-emerald-600" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">

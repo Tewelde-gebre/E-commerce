@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeChapaPayment } from '../../api/orderApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { ShoppingCart, Package, Heart, User, BarChart2, Trash2, Plus, Minus, Globe, ArrowRight, CreditCard, Building2, Smartphone, X } from 'lucide-react';
+import { ShoppingCart, Package, Heart, User, BarChart2, Trash2, Plus, Minus, Globe, ArrowRight, CreditCard, Building2, Smartphone, X, ShoppingBag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const MyCart = () => {
@@ -10,6 +10,7 @@ const MyCart = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{"name":"Buyer"}');
 
   const handlePayment = async () => {
     try {
@@ -69,25 +70,47 @@ const MyCart = () => {
     { label: 'Profile', icon: User, link: '/buyer/profile' },
   ];
 
-  const cartItems = [
-    { id: 1, name: 'Premium Cotton Tee', price: 29.99, quantity: 2, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=150&q=80' },
-    { id: 2, name: 'Denim Jacket', price: 89.99, quantity: 1, image: 'https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?auto=format&fit=crop&w=150&q=80' },
-  ];
+  const [cartItems, setCartItems] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cartItems') || '[]'); } catch { return []; }
+  });
+
+  const updateCart = (updatedCart) => {
+    setCartItems(updatedCart);
+    localStorage.setItem('cartItems', JSON.stringify(updatedCart));
+  };
+
+  const incrementQty = (id) => updateCart(cartItems.map(i => i.id === id ? { ...i, quantity: i.quantity + 1 } : i));
+  const decrementQty = (id) => {
+    const item = cartItems.find(i => i.id === id);
+    if (item && item.quantity > 1) updateCart(cartItems.map(i => i.id === id ? { ...i, quantity: i.quantity - 1 } : i));
+    else removeItem(id);
+  };
+  const removeItem = (id) => updateCart(cartItems.filter(i => i.id !== id));
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
     <DashboardLayout
       sidebarItems={sidebarItems}
-      user={{ name: 'አበበ', role: 'Buyer' }}
+      user={{ name: userInfo?.name || 'Buyer', role: 'Buyer' }}
       themeColor="bg-blue-600"
       secondaryColor="bg-blue-700"
     >
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Shopping Cart</h1>
-        <p className="text-slate-400 text-sm font-medium mt-1">{cartItems.length} items in your cart</p>
+        <p className="text-slate-400 text-sm font-medium mt-1">
+          {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your cart
+        </p>
       </div>
+
+      {cartItems.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <ShoppingBag className="w-20 h-20 text-slate-200" />
+          <p className="text-slate-400 font-bold text-lg">Your cart is empty.</p>
+          <Link to="/buyer/discover" className="text-blue-600 font-bold hover:underline text-sm">Browse products →</Link>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Cart Items */}
@@ -110,15 +133,15 @@ const MyCart = () => {
                     <p className="text-blue-600 font-bold text-base mt-1">ብር {item.price}</p>
                   </div>
                   <div className="flex items-center gap-1 bg-slate-100 px-1 py-1 rounded-xl">
-                    <button className="p-1.5 hover:bg-white rounded-lg transition-colors text-slate-500 hover:text-slate-800">
+                    <button onClick={() => decrementQty(item.id)} className="p-1.5 hover:bg-white rounded-lg transition-colors text-slate-500 hover:text-slate-800">
                       <Minus className="w-3.5 h-3.5" />
                     </button>
                     <span className="font-bold text-sm w-8 text-center text-slate-800">{item.quantity}</span>
-                    <button className="p-1.5 hover:bg-white rounded-lg transition-colors text-slate-500 hover:text-slate-800">
+                    <button onClick={() => incrementQty(item.id)} className="p-1.5 hover:bg-white rounded-lg transition-colors text-slate-500 hover:text-slate-800">
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <button className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 active:scale-90">
+                  <button onClick={() => removeItem(item.id)} className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 active:scale-90">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </motion.div>

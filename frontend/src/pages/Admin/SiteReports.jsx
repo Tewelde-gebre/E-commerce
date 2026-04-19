@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { Users, LayoutGrid, ClipboardList, BarChart3, ShieldCheck, DollarSign, ShoppingBag, Activity, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { 
+  Users, LayoutGrid, ClipboardList, BarChart3, ShieldCheck, 
+  DollarSign, ShoppingBag, Activity, ArrowUpRight, TrendingUp, Loader2
+} from 'lucide-react';
+import { getUsers } from '../../api/authApi';
+import { getProducts } from '../../api/productApi';
+import { getAllOrders } from '../../api/orderApi';
 
 const ReportCard = ({ title, value, icon: Icon, color, description }) => (
   <div className="bg-slate-800/40 rounded-3xl p-8 border border-slate-700/50 hover:bg-slate-800 transition-all hover:shadow-2xl hover:shadow-blue-500/5 flex flex-col gap-6">
@@ -10,7 +16,7 @@ const ReportCard = ({ title, value, icon: Icon, color, description }) => (
       </div>
       <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
         <ArrowUpRight className="w-4 h-4" />
-        <span className="text-xs font-black uppercase tracking-widest">Growth</span>
+        <span className="text-xs font-black uppercase tracking-widest">Live</span>
       </div>
     </div>
     
@@ -24,6 +30,9 @@ const ReportCard = ({ title, value, icon: Icon, color, description }) => (
 );
 
 const SiteReports = () => {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ users: 0, products: 0, revenue: 0, orders: 0 });
+
   const sidebarItems = [
     { label: 'Dashboard', icon: BarChart3, link: '/admin' },
     { label: 'Manage Users', icon: Users, link: '/admin/users' },
@@ -31,6 +40,33 @@ const SiteReports = () => {
     { label: 'Manage Orders', icon: ClipboardList, link: '/admin/orders' },
     { label: 'Site Reports', icon: ShieldCheck, link: '/admin/reports', active: true },
   ];
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [users, products, orders] = await Promise.all([
+          getUsers(),
+          getProducts(),
+          getAllOrders(),
+        ]);
+        const revenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+        setStats({
+          users: users.length,
+          products: products.length,
+          orders: orders.length,
+          revenue,
+        });
+      } catch (err) {
+        console.error('SiteReports fetch failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  // Calculate a realistic percentage for the progress bars based on simple ratios
+  const sellerCount = stats.users > 0 ? Math.min(100, Math.round((stats.orders / Math.max(1, stats.users)) * 10)) : 0;
 
   return (
     <DashboardLayout 
@@ -41,51 +77,76 @@ const SiteReports = () => {
       isDark={true}
       headerLeft={<div className="flex items-center gap-3"><ShieldCheck className="text-blue-400" /> Platform Intelligence</div>}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
-         <ReportCard title="Revenue Growth" value="$142.5K" icon={DollarSign} color="bg-emerald-600" description="Total marketplace transaction volume across all registered merchants." />
-         <ReportCard title="User Acquisition" value="+2,450" icon={Users} color="bg-blue-600" description="New registration metrics for buyers and sellers this quarter." />
-         <ReportCard title="Product Listing" value="15.8K" icon={ShoppingBag} color="bg-rose-600" description="Total active items currently being brokered through the platform." />
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-32">
+          <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+             <ReportCard 
+               title="Platform Revenue" 
+               value={`ብር ${stats.revenue.toLocaleString()}`}
+               icon={DollarSign} 
+               color="bg-emerald-600" 
+               description="Total marketplace transaction volume across all registered buyers." 
+             />
+             <ReportCard 
+               title="Registered Users" 
+               value={stats.users.toLocaleString()}
+               icon={Users} 
+               color="bg-blue-600" 
+               description="Total registered accounts across buyers, sellers, and admins." 
+             />
+             <ReportCard 
+               title="Active Listings" 
+               value={stats.products.toLocaleString()} 
+               icon={ShoppingBag} 
+               color="bg-rose-600" 
+               description="Total products currently listed by sellers on the platform." 
+             />
+          </div>
 
-      <div className="bg-slate-800/30 rounded-3xl p-8 border border-slate-700 shadow-2xl">
-         <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
-            <div>
-               <h2 className="text-2xl font-black text-white tracking-widest uppercase mb-1">System Health Analytics</h2>
-               <p className="text-slate-500 text-sm font-bold">Real-time platform performance monitoring and auditing.</p>
-            </div>
-            <button className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-2xl border border-slate-600 transition-all flex items-center gap-3">
-               <Activity className="w-5 h-5 text-blue-400" />
-               Generate Full Report
-            </button>
-         </div>
+          <div className="bg-slate-800/30 rounded-3xl p-8 border border-slate-700 shadow-2xl">
+             <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
+                <div>
+                   <h2 className="text-2xl font-black text-white tracking-widest uppercase mb-1">Platform Summary</h2>
+                   <p className="text-slate-500 text-sm font-bold">Live data from your database.</p>
+                </div>
+             </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div className="space-y-8">
-               {[
-                  { label: 'Marketplace Volume', value: '85%', color: 'bg-emerald-500' },
-                  { label: 'System Uptime', value: '99.9%', color: 'bg-blue-500' },
-                  { label: 'User Retention', value: '72%', color: 'bg-indigo-500' },
-                  { label: 'Seller Satisfaction', value: '94%', color: 'bg-orange-500' }
-               ].map((item, idx) => (
-                  <div key={idx}>
-                      <div className="flex justify-between mb-3 text-xs font-black uppercase tracking-widest leading-none">
-                          <span className="text-slate-500">{item.label}</span>
-                          <span className="text-white">{item.value}</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
-                          <div className={`h-full ${item.color} rounded-full`} style={{ width: item.value.includes('%') ? item.value : '100%' }}></div>
-                      </div>
-                  </div>
-               ))}
-            </div>
-            <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 flex flex-col items-center justify-center gap-6">
-               <TrendingUp className="w-20 h-20 text-slate-700" />
-               <p className="text-slate-500 font-bold tracking-widest uppercase text-center text-xs leading-loose">
-                  Aggregated time-series data <br /> visualization is currently <br /> being processed for this node.
-               </p>
-            </div>
-         </div>
-      </div>
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="space-y-8">
+                   {[
+                      { label: 'Total Orders', value: stats.orders, max: Math.max(stats.orders, 1), color: 'bg-emerald-500' },
+                      { label: 'Total Products', value: stats.products, max: Math.max(stats.products, 1), color: 'bg-blue-500' },
+                      { label: 'Total Users', value: stats.users, max: Math.max(stats.users, 1), color: 'bg-indigo-500' },
+                      { label: 'Platform Revenue (ብር)', value: Math.round(stats.revenue), max: Math.max(stats.revenue, 1), color: 'bg-orange-500' },
+                   ].map((item, idx) => {
+                     const pct = Math.min(100, Math.round((item.value / item.max) * 100));
+                     return (
+                       <div key={idx}>
+                           <div className="flex justify-between mb-3 text-xs font-black uppercase tracking-widest leading-none">
+                               <span className="text-slate-500">{item.label}</span>
+                               <span className="text-white">{item.value.toLocaleString()}</span>
+                           </div>
+                           <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
+                               <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                           </div>
+                       </div>
+                     );
+                   })}
+                </div>
+                <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 flex flex-col items-center justify-center gap-6">
+                   <TrendingUp className="w-20 h-20 text-slate-700" />
+                   <p className="text-slate-500 font-bold tracking-widest uppercase text-center text-xs leading-loose">
+                     All data shown is live <br /> and pulled directly from <br /> the database in real time.
+                   </p>
+                </div>
+             </div>
+          </div>
+        </>
+      )}
     </DashboardLayout>
   );
 };
