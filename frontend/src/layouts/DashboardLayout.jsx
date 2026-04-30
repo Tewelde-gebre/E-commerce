@@ -4,6 +4,7 @@ import { Menu, X, ChevronRight, Home, Camera, Upload, Bell, LogOut, User as User
 import { motion, AnimatePresence } from 'framer-motion';
 import { updateUserProfile, getProfile } from '../api/authApi';
 import { getNotifications, markAsRead } from '../api/notificationApi';
+import { getImageUrl } from '../utils/imageUrl';
 
 const SidebarItem = ({ item, idx, isDark, accent, setIsSidebarOpen }) => {
   return (
@@ -190,8 +191,7 @@ const DashboardLayout = ({
 
   const getAvatarSource = () => {
     if (!currentUser.avatar) return null;
-    if (currentUser.avatar.startsWith('http')) return currentUser.avatar;
-    return `https://fashion-9hk0.onrender.com${currentUser.avatar}`;
+    return getImageUrl(currentUser.avatar);
   };
 
   const SidebarContent = () => (

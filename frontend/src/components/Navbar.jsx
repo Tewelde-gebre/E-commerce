@@ -1,14 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ShoppingBag, Search, Heart, Globe, ChevronDown, Check } from 'lucide-react';
+import { getProducts } from '../api/productApi';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [language, setLanguage] = useState('EN');
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+  const searchInputRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Fetch total product count
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const products = await getProducts();
+        setCartCount(products.length);
+      } catch (e) {
+        setCartCount(0);
+      }
+    };
+    fetchCount();
+  }, []);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    navigate(`/explore?keyword=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
+  const handleHeartClick = () => {
+    const user = localStorage.getItem('user');
+    if (!user) { navigate('/login'); return; }
+    const role = JSON.parse(user).role;
+    navigate(role === 'buyer' ? '/buyer/liked' : '/login');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -115,18 +156,55 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center gap-5">
-            <button className={`p-1 group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`}>
-              <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            </button>
-            <button className={`p-1 group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-rose-500'}`}>
+          <div className="flex items-center gap-5 relative">
+            {/* Search */}
+            <div className="relative">
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className={`p-1 group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`}
+              >
+                <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <motion.form
+                    onSubmit={handleSearch}
+                    initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, x: 20 }}
+                    className="absolute right-0 top-10 bg-white rounded-2xl shadow-2xl border border-slate-100 flex overflow-hidden z-50"
+                  >
+                    <input
+                      ref={searchInputRef}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search products..."
+                      className="w-52 px-4 py-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-300"
+                    />
+                    <button type="submit" className="px-4 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                      <Search className="w-4 h-4" />
+                    </button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Heart / Wishlist */}
+            <button
+              onClick={handleHeartClick}
+              className={`p-1 group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-rose-500'}`}
+            >
               <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </button>
-            <Link to="/cart" className={`p-1 relative group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`}>
+
+            {/* Cart / Products Count */}
+            <Link to="/explore" className={`p-1 relative group transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`}>
               <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg shadow-blue-500/30">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg shadow-blue-500/30">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
             </Link>
           </div>
 

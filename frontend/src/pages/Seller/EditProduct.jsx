@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { PlusCircle, ShoppingBag, List, TrendingUp, BarChart2, User, MessageSquare, Shirt, X, Upload, Loader2 } from 'lucide-react';
-import { createProduct } from '../../api/productApi';
+import { PlusCircle, ShoppingBag, List, TrendingUp, BarChart2, User, MessageSquare, Shirt, X, Upload, Loader2, Save } from 'lucide-react';
+import { getProductById, updateProduct } from '../../api/productApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
-const AddProduct = () => {
+const EditProduct = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -80,10 +82,36 @@ const AddProduct = () => {
     fileInputRef.current?.click();
   };
 
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const data = await getProductById(id);
+        setFormData({
+          title: data.title || '',
+          category: data.category || 'cloths',
+          productType: data.productType || '',
+          gender: data.gender || 'unisex',
+          price: data.price || '',
+          currency: data.currency || 'Birr',
+          stock: data.stock !== undefined ? data.stock : '',
+          description: data.description || '',
+          sizes: data.sizes || []
+        });
+        if (data.image) {
+          setImagePreview(getImageUrl(data.image));
+        }
+      } catch (err) {
+        console.error('Failed to fetch product', err);
+        alert('Failed to load product data');
+      }
+    };
+    fetchProduct();
+  }, [id]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!image) {
-      alert('Please upload at least one clothing image');
+    if (!imagePreview && !image) {
+      alert('Please provide at least one clothing image');
       return;
     }
     if (formData.sizes.length === 0) {
@@ -111,10 +139,12 @@ const AddProduct = () => {
       data.append('gender', formData.gender);
       data.append('stock', formData.stock);
       data.append('sizes', JSON.stringify(formData.sizes));
-      data.append('image', image);
+      if (image) {
+        data.append('image', image);
+      }
 
-      await createProduct(data, token);
-      alert('Clothing item published successfully!');
+      await updateProduct(id, data, token);
+      alert('Clothing item updated successfully!');
       navigate('/seller/products');
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -140,7 +170,7 @@ const AddProduct = () => {
             <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl">
               <Shirt className="w-8 h-8" />
             </div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Post New Clothing</h2>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Edit Clothing</h2>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-10">
@@ -330,16 +360,16 @@ const AddProduct = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    Publishing...
+                    Updating...
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="w-6 h-6" />
-                    Publish Cloth
+                    <Save className="w-6 h-6" />
+                    Update Cloth
                   </>
                 )}
               </button>
-              <button type="button" className="flex-1 px-8 py-5 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all border border-slate-200">
+              <button type="button" onClick={() => navigate('/seller/products')} className="flex-1 px-8 py-5 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all border border-slate-200">
                 Cancel
               </button>
             </div>
@@ -350,4 +380,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct;
+export default EditProduct;

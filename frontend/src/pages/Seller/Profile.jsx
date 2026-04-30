@@ -160,7 +160,7 @@ const SellerProfile = () => {
                     <div className="w-full h-full rounded-[18px] bg-slate-100 flex items-center justify-center overflow-hidden">
                       {avatarUrl ? (
                          <img 
-                          src={avatarUrl.startsWith('http') ? avatarUrl : `https://fashion-9hk0.onrender.com${avatarUrl}`} 
+                          src={getImageUrl(avatarUrl)}
                           alt="Seller" 
                           className="w-full h-full object-cover" 
                         />

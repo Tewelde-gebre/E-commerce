@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, ArrowRight, Star, Shield, Zap, Loader2 } from 'lucide-react';
 import heroBg from '../assets/hero_bg.png';
 import { getProducts } from '../api/productApi';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -160,9 +161,13 @@ const Home = () => {
                 >
                   <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                     <img 
-                      src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
+                      src={getImageUrl(product.image)}
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = 'https://placehold.co/400x500?text=Fashion+Item';
+                      }}
                     />
                     <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase text-slate-900">
                       New Arrival
@@ -172,7 +177,7 @@ const Home = () => {
                     <h3 className="text-lg font-black text-slate-900 truncate mb-1">{product.title}</h3>
                     <p className="text-slate-500 text-sm mb-4 line-clamp-1">{product.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-black text-blue-600">${product.price}</span>
+                      <span className="text-xl font-black text-blue-600">{product.currency === 'Dollar' ? '$' : 'ብር'}{product.price?.toLocaleString()}</span>
                       <button className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-blue-600 transition-colors">
                         <ShoppingBag className="w-5 h-5" />
                       </button>

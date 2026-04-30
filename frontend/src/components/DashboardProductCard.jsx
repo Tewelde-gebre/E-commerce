@@ -22,7 +22,7 @@ const DashboardProductCard = ({ product }) => {
         </div>
         <div className="absolute bottom-2 left-2 right-2">
            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm text-center">
-              <span className="text-blue-600 font-black text-xs tracking-tight">${product.price}</span>
+              <span className="text-blue-600 font-black text-xs tracking-tight">{product.currency === 'Dollar' ? '$' : 'ብር'}{product.price?.toLocaleString()}</span>
            </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { ShoppingCart, Package, Heart, User, BarChart2, Bell, Lock, MapPin, CreditCard, Globe, Camera, Save, CheckCircle, Shield, Smartphone, ChevronRight, Loader2 } from 'lucide-react';
 import { getProfile, updateUserProfile } from '../../api/authApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState(null);
@@ -140,7 +141,7 @@ const Profile = () => {
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-blue-500/20 overflow-hidden">
                 {avatarUrl ? (
                   <img 
-                    src={avatarUrl.startsWith('http') ? avatarUrl : `https://fashion-9hk0.onrender.com${avatarUrl}`} 
+                  src={getImageUrl(avatarUrl)}
                     alt="Profile" 
                     className="w-full h-full object-cover" 
                   />

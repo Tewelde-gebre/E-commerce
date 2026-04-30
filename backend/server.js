@@ -27,6 +27,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 // Default route
 app.get('/', (req, res) => {

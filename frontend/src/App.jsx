@@ -14,6 +14,7 @@ import Profile from './pages/Buyer/Profile';
 import PaymentVerify from './pages/Buyer/PaymentVerify';
 import SellerDashboard from './pages/Seller/Dashboard';
 import AddProduct from './pages/Seller/AddProduct';
+import EditProduct from './pages/Seller/EditProduct';
 import MyProducts from './pages/Seller/MyProducts';
 import OrdersReceived from './pages/Seller/OrdersReceived';
 import SalesReport from './pages/Seller/SalesReport';
@@ -43,6 +44,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/explore" element={<Discover />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -57,6 +59,7 @@ const AppContent = () => {
 
           <Route path="/seller" element={<SellerDashboard />} />
           <Route path="/seller/add" element={<AddProduct />} />
+          <Route path="/seller/edit/:id" element={<EditProduct />} />
           <Route path="/seller/products" element={<MyProducts />} />
           <Route path="/seller/orders" element={<OrdersReceived />} />
           <Route path="/seller/report" element={<SalesReport />} />

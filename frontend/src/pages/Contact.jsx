@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageCircle, Loader2, CheckCircle } from 'lucide-react';
 import contactBg from '../assets/contact_bg.png';
+import { submitContactMessage } from '../api/contactApi';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -11,15 +12,29 @@ const Contact = () => {
     message: ''
   });
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Message sent! We will get back to you shortly.');
+    setLoading(true);
+    setError('');
+    try {
+      await submitContactMessage(formData);
+      setSuccess(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfos = [
-    { icon: Mail, label: "Email Support", value: "hello@fashionmarketplace.com" },
-    { icon: Phone, label: "Phone Line", value: "+1 (800) FASHION" },
-    { icon: MapPin, label: "Our Studio", value: "75 Fashion Ave, NY 10001" },
+    { icon: Mail, label: "Email Support", value: "teweldegebre71@gmail.com" },
+    { icon: Phone, label: "Phone Line", value: "+251 954365786" },
+    { icon: MapPin, label: "Our Studio", value: "Romanat Adebabay, Around Ride" },
   ];
 
   return (
@@ -117,61 +132,94 @@ const Contact = () => {
               viewport={{ once: true }}
               className="flex-[1.2] bg-white rounded-[50px] p-12 md:p-16 shadow-2xl shadow-slate-200 border border-slate-100"
             >
-              <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {success ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center justify-center py-16 gap-6 text-center"
+                  >
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-10 h-10 text-green-500" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 normal-case">Message Sent!</h3>
+                    <p className="text-slate-500 font-medium normal-case">Thank you for reaching out. We'll get back to you at <span className="font-bold text-slate-700">{formData.email || 'your email'}</span> soon.</p>
+                    <button
+                      onClick={() => setSuccess(false)}
+                      className="mt-2 px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-all"
+                    >
+                      Send Another Message
+                    </button>
+                  </motion.div>
+                ) : (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Your Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={formData.name}
+                        className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium normal-case"
+                        placeholder="John Doe"
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Email Address</label>
+                      <input 
+                        type="email" 
+                        required
+                        value={formData.email}
+                        className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium normal-case"
+                        placeholder="john@example.com"
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Your Name</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Subject</label>
                     <input 
                       type="text" 
                       required
+                      value={formData.subject}
                       className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium normal-case"
-                      placeholder="John Doe"
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Inquiry about..."
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
                     />
                   </div>
+
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Email Address</label>
-                    <input 
-                      type="email" 
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Message</label>
+                    <textarea 
                       required
-                      className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium normal-case"
-                      placeholder="john@example.com"
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
+                      rows="5"
+                      value={formData.message}
+                      className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium resize-none normal-case"
+                      placeholder="How can we help?"
+                      onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    ></textarea>
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Subject</label>
-                  <input 
-                    type="text" 
-                    required
-                    className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium normal-case"
-                    placeholder="Inquiry about..."
-                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                  />
-                </div>
+                  {error && (
+                    <p className="text-red-500 text-sm font-medium text-center normal-case">{error}</p>
+                  )}
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 text-left">Message</label>
-                  <textarea 
-                    required
-                    rows="5"
-                    className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-800 font-medium resize-none normal-case"
-                    placeholder="How can we help?"
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  ></textarea>
-                </div>
-
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-2xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-all group"
-                >
-                  Send Message
-                  <Send className="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-              </form>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-2xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-all group disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-5 h-5 animate-spin" /> Sending...</>
+                    ) : (
+                      <>Send Message <Send className="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" /></>
+                    )}
+                  </motion.button>
+                </form>
+                )}
             </motion.div>
           </div>
         </div>

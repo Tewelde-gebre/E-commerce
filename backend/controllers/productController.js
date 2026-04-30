@@ -133,4 +133,43 @@ const getMyProducts = async (req, res) => {
     }
 };
 
-module.exports = { getProducts, getProductById, createProduct, likeProduct, deleteProduct, getMyProducts };
+// Update product
+const updateProduct = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        if (product.sellerId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        const { title, description, price, currency, category, productType, gender, stock, sizes } = req.body;
+        
+        product.title = title || product.title;
+        product.description = description || product.description;
+        product.price = price || product.price;
+        product.currency = currency || product.currency;
+        product.category = category || product.category;
+        product.productType = productType || product.productType;
+        product.gender = gender || product.gender;
+        product.stock = stock !== undefined ? stock : product.stock;
+        
+        if (sizes) {
+            product.sizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+        }
+
+        if (req.file) {
+            product.image = `/${req.file.path.replace(/\\/g, '/')}`;
+        }
+
+        const updatedProduct = await product.save();
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getProducts, getProductById, createProduct, updateProduct, likeProduct, deleteProduct, getMyProducts };

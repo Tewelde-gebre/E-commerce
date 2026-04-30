@@ -116,7 +116,7 @@ const Login = () => {
 
       // Store credentials and navigate
       localStorage.setItem('token', data.token);
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      localStorage.setItem('user', JSON.stringify(data));
       navigate(`/${role}`);
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Check your credentials.");

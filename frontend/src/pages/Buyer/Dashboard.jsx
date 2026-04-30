@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { getProfile } from '../../api/authApi';
 import { getMyOrders } from '../../api/orderApi';
 import { getProducts } from '../../api/productApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const StatCard = ({ title, value, icon: Icon, color = 'bg-blue-600', trend = 'Live data' }) => (
   <motion.div 
@@ -117,7 +118,7 @@ const Dashboard = () => {
     id: p._id,
     name: p.title,
     price: p.price,
-    image: p.image?.startsWith('http') ? p.image : `https://fashion-9hk0.onrender.com${p.image}`,
+    image: getImageUrl(p.image),
   }));
 
   return (

@@ -4,6 +4,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import { ShoppingCart, Package, Heart, User, BarChart2, ShoppingBag, Trash2, Globe, Loader2 } from 'lucide-react';
 import { getProfile } from '../../api/authApi';
 import { getProducts } from '../../api/productApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const LikedProducts = () => {
   const [profile, setProfile] = useState(null);
@@ -87,7 +88,7 @@ const LikedProducts = () => {
             >
               <div className="aspect-[4/5] overflow-hidden relative bg-slate-100">
                 <img
-                  src={item.image?.startsWith('http') ? item.image : `https://fashion-9hk0.onrender.com${item.image}`}
+                  src={getImageUrl(item.image)}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

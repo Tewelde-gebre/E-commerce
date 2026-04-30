@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Send, MoreHorizontal, User, Loader2 } from 'lucide-react';
 import { likeProduct } from '../api/productApi';
 import { addComment, getCommentsByProduct } from '../api/commentApi';
+import { getImageUrl } from '../utils/imageUrl';
 
 const ProductPost = ({ product }) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -105,9 +106,13 @@ const ProductPost = ({ product }) => {
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-slate-100">
         <img 
-          src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
+          src={getImageUrl(product.image)} 
           alt={product.title} 
           className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+          onError={(e) => {
+            e.target.onerror = null; 
+            e.target.src = 'https://placehold.co/600x600?text=Fashion+Product';
+          }}
         />
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg shadow-black/5">
           <span className="text-blue-600 font-black text-sm tracking-tight">{product.currency === 'Dollar' ? '$' : 'ብር'} {product.price?.toLocaleString()}</span>

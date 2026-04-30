@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { PlusCircle, ShoppingBag, List, TrendingUp, BarChart2, Edit2, Trash2, ExternalLink, User, MessageSquare, Loader2 } from 'lucide-react';
-import { getMyProducts } from '../../api/productApi';
+import { getMyProducts, deleteProduct } from '../../api/productApi';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const MyProducts = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const user = JSON.parse(localStorage.getItem('userInfo') || '{"name": "Seller", "role": "seller"}');
+  const user = JSON.parse(localStorage.getItem('user') || '{"name": "Seller", "role": "seller"}');
 
   useEffect(() => {
     const fetchMyProducts = async () => {
@@ -30,6 +31,19 @@ const MyProducts = () => {
     };
     fetchMyProducts();
   }, [navigate]);
+
+  const handleDelete = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await deleteProduct(productId, token);
+        setProducts(products.filter(p => p._id !== productId));
+      } catch (err) {
+        console.error('Error deleting product:', err);
+        alert('Failed to delete product. Please try again.');
+      }
+    }
+  };
 
   const sidebarItems = [
     { label: 'Dashboard', icon: BarChart2, link: '/seller' },
@@ -92,15 +106,15 @@ const MyProducts = () => {
               <div key={product._id} className="flex flex-col p-5 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-xl">
                 <div className="w-full aspect-square rounded-xl overflow-hidden bg-white shadow-sm mb-5 relative">
                   <img 
-                    src={product.image.startsWith('http') ? product.image : `https://fashion-9hk0.onrender.com${product.image}`} 
+                    src={getImageUrl(product.image)}
                     alt={product.title} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   />
                   <div className="absolute top-3 right-3 flex gap-1 transform translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <button className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-blue-600 rounded-full shadow-lg">
+                    <button onClick={() => navigate(`/seller/edit/${product._id}`)} className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-blue-600 rounded-full shadow-lg">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-red-500 rounded-full shadow-lg">
+                    <button onClick={() => handleDelete(product._id)} className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-red-500 rounded-full shadow-lg">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

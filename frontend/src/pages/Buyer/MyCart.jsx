@@ -10,7 +10,7 @@ const MyCart = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{"name":"Buyer"}');
+  const user = JSON.parse(localStorage.getItem('user') || '{"name":"Buyer"}');
 
   const handlePayment = async () => {
     try {
@@ -92,7 +92,7 @@ const MyCart = () => {
   return (
     <DashboardLayout
       sidebarItems={sidebarItems}
-      user={{ name: userInfo?.name || 'Buyer', role: 'Buyer' }}
+      user={{ name: user?.name || 'Buyer', role: 'Buyer' }}
       themeColor="bg-blue-600"
       secondaryColor="bg-blue-700"
     >
