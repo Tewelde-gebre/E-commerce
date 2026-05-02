@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { 
-  Users, LayoutGrid, ClipboardList, BarChart3, Search, Package, 
-  CheckCircle, XCircle, MoreVertical, ShieldAlert, Store, Tag, 
+import {
+  Users, LayoutGrid, ClipboardList, BarChart3, Search, Package,
+  CheckCircle, XCircle, MoreVertical, ShieldAlert, Store, Tag,
   Trash2, Filter, AlertCircle, ShoppingBag, ShieldCheck, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +11,7 @@ import axiosInstance from '../../api/axiosConfig';
 
 const ProductCard = ({ id, name, status, category, price, items, seller, color, onAction }) => {
   return (
-    <motion.div 
+    <motion.div
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -29,40 +29,40 @@ const ProductCard = ({ id, name, status, category, price, items, seller, color, 
           <Package className="w-9 h-9" />
         </div>
         <div className="flex flex-col gap-2">
-           <button 
-             onClick={() => onAction(id, 'Approve')}
-             className="p-2.5 bg-slate-900/80 hover:bg-emerald-500/20 text-slate-500 hover:text-emerald-400 rounded-xl transition-all border border-slate-700/50"
-             title="Approve Listing"
-           >
-             <CheckCircle className="w-5 h-5" />
-           </button>
-           <button 
-             onClick={() => onAction(id, 'Flagged')}
-             className="p-2.5 bg-slate-900/80 hover:bg-amber-500/20 text-slate-500 hover:text-amber-400 rounded-xl transition-all border border-slate-700/50"
-             title="Flag Content"
-           >
-             <ShieldAlert className="w-5 h-5" />
-           </button>
-           <button 
-             onClick={() => onAction(id, 'Delete')}
-             className="p-2.5 bg-slate-900/80 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-xl transition-all border border-slate-700/50"
-             title="Delete Listing"
-           >
-             <Trash2 className="w-5 h-5" />
-           </button>
+          <button
+            onClick={() => onAction(id, 'Approve')}
+            className="p-2.5 bg-slate-900/80 hover:bg-emerald-500/20 text-slate-500 hover:text-emerald-400 rounded-xl transition-all border border-slate-700/50"
+            title="Approve Listing"
+          >
+            <CheckCircle className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onAction(id, 'Flagged')}
+            className="p-2.5 bg-slate-900/80 hover:bg-amber-500/20 text-slate-500 hover:text-amber-400 rounded-xl transition-all border border-slate-700/50"
+            title="Flag Content"
+          >
+            <ShieldAlert className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => onAction(id, 'Delete')}
+            className="p-2.5 bg-slate-900/80 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-xl transition-all border border-slate-700/50"
+            title="Delete Listing"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
       </div>
-      
+
       <div className="relative z-10">
         <h3 className="font-black text-white text-xl mb-1 tracking-tight truncate">{name}</h3>
         <div className="flex items-center gap-2 mb-4">
-           <Store className="w-3.5 h-3.5 text-slate-500" />
-           <p className="text-slate-400 text-xs font-bold truncate">Seller: <span className="text-blue-400">{seller}</span></p>
+          <Store className="w-3.5 h-3.5 text-slate-500" />
+          <p className="text-slate-400 text-xs font-bold truncate">Seller: <span className="text-blue-400">{seller}</span></p>
         </div>
         <div className="flex items-center gap-2">
-            <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border border-slate-700/50">
-              {category}
-            </span>
+          <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border border-slate-700/50">
+            {category}
+          </span>
         </div>
       </div>
 
@@ -78,18 +78,17 @@ const ProductCard = ({ id, name, status, category, price, items, seller, color, 
       </div>
 
       <div className="pt-6 border-t border-white/5 flex justify-between items-center relative z-10">
-         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-           status === 'Active' 
-             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-             : status === 'Flagged'
-             ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-             : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-         }`}>
-           {status}
-         </span>
-         <button className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-900/50 rounded-xl">
-            <MoreVertical className="w-5 h-5" />
-         </button>
+        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${status === 'Active'
+            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            : status === 'Flagged'
+              ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+              : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+          }`}>
+          {status}
+        </span>
+        <button className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-900/50 rounded-xl">
+          <MoreVertical className="w-5 h-5" />
+        </button>
       </div>
     </motion.div>
   );
@@ -177,8 +176,8 @@ const ManageProducts = () => {
   });
 
   return (
-    <DashboardLayout 
-      sidebarItems={sidebarItems} 
+    <DashboardLayout
+      sidebarItems={sidebarItems}
       user={{ name: 'Admin', role: 'Admin' }}
       themeColor="bg-slate-900"
       secondaryColor="bg-slate-800"
@@ -201,26 +200,25 @@ const ManageProducts = () => {
               <button
                 key={t}
                 onClick={() => setFilter(t)}
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  filter === t 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === t
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                     : 'text-slate-500 hover:text-slate-300'
-                }`}
+                  }`}
               >
                 {t}
               </button>
             ))}
           </div>
-          
+
           <div className="relative flex-1 sm:w-80 group">
-             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
-             <input 
-               type="text"
-               value={search}
-               onChange={e => setSearch(e.target.value)}
-               placeholder="Search by product name or seller..." 
-               className="w-full pl-14 pr-6 py-4 bg-slate-900/80 border border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-white transition-all shadow-inner placeholder:text-slate-600" 
-             />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by product name or seller..."
+              className="w-full pl-14 pr-6 py-4 bg-slate-900/80 border border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-white transition-all shadow-inner placeholder:text-slate-600"
+            />
           </div>
         </div>
       </div>
@@ -236,11 +234,11 @@ const ManageProducts = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
-             <AnimatePresence mode="popLayout">
-               {filteredProducts.map((p) => (
-                  <ProductCard key={p.id} {...p} onAction={handleAction} />
-               ))}
-             </AnimatePresence>
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((p) => (
+                <ProductCard key={p.id} {...p} onAction={handleAction} />
+              ))}
+            </AnimatePresence>
           </div>
 
           {filteredProducts.length === 0 && (

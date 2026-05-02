@@ -144,7 +144,7 @@ const Home = () => {
           ) : error ? (
             <div className="bg-slate-50 rounded-[40px] p-12 text-center border-2 border-dashed border-slate-200">
               <p className="text-slate-400 font-bold mb-4">{error}</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all"
               >
@@ -152,24 +152,32 @@ const Home = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
               {products.map((product) => (
                 <motion.div
                   key={product._id}
+                  variants={itemVariants}
                   whileHover={{ y: -10 }}
                   className="group bg-white rounded-[32px] overflow-hidden border border-slate-100 hover:shadow-2xl transition-all"
                 >
-                  <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
-                    <img 
+                  <div className="aspect-[4/5] relative overflow-hidden bg-slate-50 flex items-center justify-center">
+                    <img
                       src={getImageUrl(product.image)}
                       alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 block"
                       onError={(e) => {
-                        e.target.onerror = null; 
+                        console.error('Image load error for:', product.title, 'Path:', product.image);
+                        e.target.onerror = null;
                         e.target.src = 'https://placehold.co/400x500?text=Fashion+Item';
                       }}
                     />
-                    <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase text-slate-900">
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase text-slate-900 shadow-sm">
                       New Arrival
                     </div>
                   </div>
@@ -185,7 +193,7 @@ const Home = () => {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       </section>

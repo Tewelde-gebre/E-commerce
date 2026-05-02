@@ -110,11 +110,25 @@ const MyProducts = () => {
                     alt={product.title} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   />
-                  <div className="absolute top-3 right-3 flex gap-1 transform translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <button onClick={() => navigate(`/seller/edit/${product._id}`)} className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-blue-600 rounded-full shadow-lg">
+                  <div className="absolute top-2 right-2 flex gap-2 z-10">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/seller/edit/${product._id}`);
+                      }} 
+                      className="w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg shadow-lg transition-all active:scale-90"
+                      title="Edit Product"
+                    >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(product._id)} className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur text-slate-600 hover:text-red-500 rounded-full shadow-lg">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(product._id);
+                      }} 
+                      className="w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-red-500 hover:bg-red-500 hover:text-white rounded-lg shadow-lg transition-all active:scale-90"
+                      title="Delete Product"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
