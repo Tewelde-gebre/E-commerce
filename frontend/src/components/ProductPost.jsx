@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Send, MoreHorizontal, User, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Send, MoreHorizontal, User, Loader2, Edit2, Trash2 } from 'lucide-react';
 import { likeProduct } from '../api/productApi';
 import { addComment, getCommentsByProduct } from '../api/commentApi';
 import { getImageUrl } from '../utils/imageUrl';
@@ -114,6 +114,44 @@ const ProductPost = ({ product }) => {
             e.target.src = 'https://placehold.co/600x600?text=Fashion+Product';
           }}
         />
+        
+        {/* Seller Actions Overlay (only if owner) */}
+        {(() => {
+          const user = JSON.parse(localStorage.getItem('user'));
+          const isOwner = user && (user._id === product.sellerId?._id || user._id === product.sellerId);
+          
+          if (isOwner) {
+            return (
+              <div className="absolute top-4 left-4 flex gap-2 z-10">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.href = `/seller/edit/${product._id}`;
+                  }}
+                  className="w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-blue-600 rounded-lg shadow-lg active:scale-90 transition-all"
+                  title="Edit Post"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm('Delete this post?')) {
+                      // We'd ideally call a prop function here, but for now we redirect to manage page
+                      window.location.href = '/seller/products';
+                    }
+                  }}
+                  className="w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-red-500 rounded-lg shadow-lg active:scale-90 transition-all"
+                  title="Delete Post"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg shadow-black/5">
           <span className="text-blue-600 font-black text-sm tracking-tight">{product.currency === 'Dollar' ? '$' : 'ብር'} {product.price?.toLocaleString()}</span>
         </div>

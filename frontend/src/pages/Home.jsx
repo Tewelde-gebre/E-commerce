@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, ArrowRight, Star, Shield, Zap, Loader2 } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Star, Shield, Zap, Loader2, Edit2, Trash2 } from 'lucide-react';
 import heroBg from '../assets/hero_bg.png';
 import { getProducts } from '../api/productApi';
 import { getImageUrl } from '../utils/imageUrl';
@@ -172,11 +172,49 @@ const Home = () => {
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 block"
                       onError={(e) => {
-                        console.error('Image load error for:', product.title, 'Path:', product.image);
-                        e.target.onerror = null;
+                        console.error('Image load error for:', product.title, 'Full URL:', e.target.src);
+                        e.target.onerror = null; 
                         e.target.src = 'https://placehold.co/400x500?text=Fashion+Item';
                       }}
                     />
+
+                    {/* Owner Actions */}
+                    {(() => {
+                      const user = JSON.parse(localStorage.getItem('user'));
+                      const isOwner = user && (user._id === product.sellerId?._id || user._id === product.sellerId);
+                      
+                      if (isOwner) {
+                        return (
+                          <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.location.href = `/seller/edit/${product._id}`;
+                              }}
+                              className="w-10 h-10 flex items-center justify-center bg-white text-blue-600 rounded-full shadow-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90 border border-slate-100"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-5 h-5" />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (window.confirm('Delete this product?')) {
+                                  window.location.href = '/seller/products';
+                                }
+                              }}
+                              className="w-10 h-10 flex items-center justify-center bg-white text-red-500 rounded-full shadow-xl hover:bg-red-500 hover:text-white transition-all active:scale-90 border border-slate-100"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase text-slate-900 shadow-sm">
                       New Arrival
                     </div>
